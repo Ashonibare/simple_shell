@@ -1,0 +1,45 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+
+#define MAX_INPUT_SIZE 1024
+
+int main() {
+    char input[MAX_INPUT_SIZE];
+    char *args[2];
+    int status;
+
+    while (1) {
+        printf("simple_shell> ");
+        if (fgets(input, MAX_INPUT_SIZE, stdin) == NULL) {
+            printf("\n");
+            break; // Handle EOF (Ctrl+D)
+        }
+
+        // Remove newline character from input
+        input[strcspn(input, "\n")] = '\0';
+
+        // Split input into command and arguments (only one word commands)
+        args[0] = input;
+        args[1] = NULL;
+
+        // Fork a child process
+        pid_t pid = fork();
+        if (pid < 0) {
+            perror("Fork failed");
+            continue;
+        } else if (pid == 0) {
+            // Child process
+            if (execve(args[0], args, environ) == -1) {
+                perror("Error");
+            }
+            exit(EXIT_FAILURE);
+        } else {
+            // Parent process
+            wait(&status);
+        }
+    }
+
+    return 0;
+}
